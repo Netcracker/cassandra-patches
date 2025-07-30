@@ -29,7 +29,7 @@ on:
       tag:
         description: "Tag name to create"
         required: true
-        default: "v1"
+        default: "cassandra-5.0.4-patched"
       forceCreate:
         type: boolean
         description: "Force tag creation"
