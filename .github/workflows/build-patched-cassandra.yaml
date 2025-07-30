@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 name: Build .tgz for Apache Cassandra
-run-name: "cassandra-tag: ${{ inputs.cassandra-tag }}. tag: ${{ inputs.tag }}. Run #${{ github.run_number }}. Actor: ${{ github.actor }}"
+run-name: "cassandra-tag: ${{ inputs.cassandra-tag }}. tag: ${{ inputs.tag }}. Run #${{ github.run_number }}"
 
 on:
   workflow_dispatch:
