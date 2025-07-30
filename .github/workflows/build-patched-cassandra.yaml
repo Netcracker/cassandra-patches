@@ -1,0 +1,98 @@
+---
+#
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+name: Build .tgz for Apache Cassandra
+run-name: "Image for ${{ github.event.repository.name }}: ${{ github.run_number }} - ${{ github.actor }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag name to create"
+        required: true
+        default: "v1"
+      forceCreate:
+        type: boolean
+        description: "Force tag creation"
+        required: false
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create a New Tag
+        uses: netcracker/qubership-workflow-hub/actions/tag-action@main
+        with:
+          ref: ${{ github.ref_name }}
+          tag-name: ${{ inputs.tag }}
+          force-create: ${{ inputs.forceCreate }}
+          switch-to-tag: true
+          create-release: true
+          skip-checkout: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: adopt
+          java-version: 11
+      - name: Setup JDK
+        run: |
+          sudo apt install -y openjdk-11-jdk
+          jdk_path=$(update-java-alternatives --list | grep "java-1.11." |awk '{print $3}')
+          sudo update-java-alternatives --set ${jdk_path}
+          export JAVA_HOME=${jdk_path}
+          echo "JAVA_HOME=${jdk_path}" >> $GITHUB_ENV
+          echo "JAVA_HOME=${JAVA_HOME}"
+          java -version
+      - uses: cedx/setup-ant@v4
+        with:
+          optional-tasks: false
+          version: ">=1.10.0"
+      - name: build
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME"
+          ant jar
+          ant bintar
+
+      - name: "Upload files"
+        uses: actions/upload-artifact@v4
+        with:
+          include-hidden-files: true
+          path: ${{ github.workspace }}/build/apache-cassandra-*.tar.gz
+          name: apache-cassandra
+
+      - name: "Upload assets"
+        if: success()
+        uses: netcracker/qubership-workflow-hub/actions/assets-action@main
+        with:
+          tag: ${{ inputs.tag }}
+          item-path: build/apache-cassandra-*.tar.gz, NEWS.txt, NOTICE.txt, ci
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
