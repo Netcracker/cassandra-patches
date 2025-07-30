@@ -109,12 +109,11 @@ jobs:
           optional-tasks: false
           version: ">=1.10.0"
       - name: build
+        if: ${{ !inputs.run-tests }}
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           chmod +x ./.build/build-artifacts.sh
           ./.build/build-artifacts.sh
-          #ant jar
-          #ant bintar
         env:
           CASSANDRA_DIR: ${{ github.workspace }}
       - name: test
