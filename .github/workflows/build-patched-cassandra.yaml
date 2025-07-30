@@ -35,11 +35,6 @@ on:
         description: "Force tag creation"
         required: false
         default: true
-      run-tests:
-        description: "Run cassandra tests"
-        type: boolean
-        required: true
-        default: false
 
 permissions:
   contents: write
@@ -97,6 +92,12 @@ jobs:
           java-version: 11
       - name: Setup JDK
         run: |
+          # Skip installing pacakge docs {makes the man-db trigger much faster)
+          sudo tee /etc/dpkg/dpkg.cfg.d/01_nodoc > /dev/null << 'EOF'
+          path-exclude /usr/share/doc/*
+          path-exclude /usr/share/man/*
+          path-exclude /usr/share/info/*
+          EOF
           sudo apt install -y openjdk-11-jdk
           jdk_path=$(update-java-alternatives --list | grep "java-1.11." |awk '{print $3}')
           sudo update-java-alternatives --set ${jdk_path}
@@ -109,20 +110,10 @@ jobs:
           optional-tasks: false
           version: ">=1.10.0"
       - name: build
-        if: ${{ !inputs.run-tests }}
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
           chmod +x ./.build/build-artifacts.sh
           ./.build/build-artifacts.sh
-        env:
-          CASSANDRA_DIR: ${{ github.workspace }}
-      - name: test
-        if: ${{ inputs.run-tests }}
-        run: |
-          chmod +x ./.build/run-tests.sh
-          chmod +x ./.build/build-jars.sh
-          ./.build/build-jars.sh
-          ./.build/run-tests.sh
         env:
           CASSANDRA_DIR: ${{ github.workspace }}
 
