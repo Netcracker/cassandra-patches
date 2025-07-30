@@ -120,6 +120,8 @@ jobs:
         if: ${{ inputs.run-tests }}
         run: |
           chmod +x ./.build/run-tests.sh
+          chmod +x ./.build/build-jars.sh
+          ./.build/build-jars.sh
           ./.build/run-tests.sh
         env:
           CASSANDRA_DIR: ${{ github.workspace }}
