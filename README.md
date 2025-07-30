@@ -1,1 +1,1 @@
-# cassandra-paches
+# cassandra-patches
