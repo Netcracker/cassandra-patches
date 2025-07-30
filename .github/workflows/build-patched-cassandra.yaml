@@ -22,6 +22,10 @@ run-name: "Image for ${{ github.event.repository.name }}: ${{ github.run_number 
 on:
   workflow_dispatch:
     inputs:
+      cassandra-tag:
+        description: "Apache Cassandra tag to build"
+        required: true
+        default: "cassandra-5.0.4"
       tag:
         description: "Tag name to create"
         required: true
@@ -44,7 +48,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create a New Tag
+      - name: Create a New Tag ${{ inputs.tag }}
         uses: netcracker/qubership-workflow-hub/actions/tag-action@main
         with:
           ref: ${{ github.ref_name }}
@@ -56,6 +60,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Cleanup
+        run: |
+          rm -rf ./*
+
+      - name: "Checkout Cassandra tag ${{ inputs.cassandra-tag }}"
+        uses: actions/checkout@v4
+        with:
+          repository: apache/cassandra
+          ref: ${{ inputs.cassandra-tag }}
+
+      - name: Checkout cassandra-patches tag ${{ inputs.tag }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          path: ./cassandra-patches
+
+      - name: Apply patches
+        run: |
+          cd ${GITHUB_WORKSPACE}
+          for p in ./cassandra-patches/cassandra-patches/${{ inputs.cassandra-tag }}/*.patch; do
+            echo "Applying $p…"
+            git apply -p1 --ignore-space-change --ignore-whitespace "$p"
+          done
+          rm -rf ./cassandra-patches        
 
       - name: Setup JDK
         uses: actions/setup-java@v4
