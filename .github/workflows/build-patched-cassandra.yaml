@@ -35,6 +35,11 @@ on:
         description: "Force tag creation"
         required: false
         default: true
+      run-tests:
+        description: "Run cassandra tests"
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: write
@@ -106,8 +111,19 @@ jobs:
       - name: build
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
-          ant jar
-          ant bintar
+          chmod +x ./.build/build-artifacts.sh
+          ./.build/build-artifacts.sh
+          #ant jar
+          #ant bintar
+        env:
+          CASSANDRA_DIR: ${{ github.workspace }}
+      - name: test
+        if: ${{ inputs.run-tests }}
+        run: |
+          chmod +x ./.build/run-tests.sh
+          ./.build/run-tests.sh
+        env:
+          CASSANDRA_DIR: ${{ github.workspace }}
 
       - name: "Upload files"
         uses: actions/upload-artifact@v4
