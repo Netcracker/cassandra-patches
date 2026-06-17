@@ -56,6 +56,7 @@ jobs:
           force-create: ${{ inputs.forceCreate }}
           switch-to-tag: true
           create-release: true
+          draft-release: false
           skip-checkout: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
