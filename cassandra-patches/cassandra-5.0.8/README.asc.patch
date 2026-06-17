@@ -1,0 +1,11 @@
+diff --git a/README.asc b/README.asc
+index 3050d2c239..2a376b9029 100644
+--- a/README.asc
++++ b/README.asc
+@@ -96,3 +96,6 @@ Wondering where to go from here?
+     dev-subscribe@cassandra.apache.org.
+   * Visit the https://cassandra.apache.org/community/[community section] of the Cassandra website for more information on getting involved.
+   * Visit the https://cassandra.apache.org/doc/latest/development/index.html[development section] of the Cassandra website for more information on how to contribute.
++
++
++Change added to test patches application
