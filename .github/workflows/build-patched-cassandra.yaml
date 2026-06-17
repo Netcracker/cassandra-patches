@@ -148,7 +148,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         # https://github.com/Netcracker/cassandra-patches/releases/download/cassandra-5.0.8-patched/apache-cassandra-5.0.8-patched-bin.tar.gz
-      - name: Get cassandra distribution artifact
+      - name: Set vars for repository dispatch event
         run: |
           CASSANDRA_DISTRO=$(find build/ -regextype posix-extended -regex '.*/apache-cassandra-[0-9.-]+bin\.tarr\.gz' | head -n 1 | xargs -I {} basename {})
           if [ -f "core/build/distributions/$CASSANDRA_DISTRO" ]; then
@@ -158,6 +158,8 @@ jobs:
             echo "Cassandra distribution not found!"
             exit 1
           fi
+          CASSANDRA_VERSION=${CASSANDRA_TAG#cassandra-}
+          echo "CASSANDRA_VERSION=$CASSANDRA_VERSION" >> $GITHUB_ENV
 
       - name: Trigger repository dispatch event
         uses: netcracker/qubership-workflow-hub/actions/custom-event@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7 # v2.4.0
@@ -166,5 +168,4 @@ jobs:
           owner: ${{ github.repository_owner }}
           repo: qubership-cassandra-operator
           event-type: cassandra-patched-build
-          client-payload: '{"cassandra-version": "${{ env.CASSANDRA_TAG }}", "cassandra-distro": "${{ env.CASSANDRA_DISTRO }}", "cassandra-distro-url": "https://github.com/${{ github.repository_owner }}/cassandra-patches/releases/download/${{ env.TAG }}/${{ env.CASSANDRA_DISTRO }}", "target-ref": "${{ env.TARGET_REF }}", "replace-symbol": "${{ env.REPLACE_SYMBOL }}", "tag": "${{ env.TAG }}", "repo":"${{ github.repository }}"}'
-        
+          client-payload: '{"cassandra-version": "${{ env.CASSANDRA_VERSION }}", "cassandra-distro": "${{ env.CASSANDRA_DISTRO }}", "cassandra-distro-url": "https://github.com/${{ github.repository_owner }}/cassandra-patches/releases/download/${{ env.TAG }}/${{ env.CASSANDRA_DISTRO }}", "target-ref": "${{ env.TARGET_REF }}", "replace-symbol": "${{ env.REPLACE_SYMBOL }}", "tag": "${{ env.TAG }}", "repo":"${{ github.repository }}"}'
