@@ -35,10 +35,20 @@ on:
         description: "Force tag creation"
         required: false
         default: true
-
+      target-ref:
+        description: "Target branch in qubership-cassandra-operator repo (default: main)"
+        required: true
+        default: "main"
+      replace-symbol:
+        description: "Symbol to change '/' in ref name to"
+        required: true
+        default: "_"
 permissions:
   contents: write
 
+env:
+  CASSANDRA_TAG: ${{ inputs.cassandra-tag }}
+  TAG: ${{ inputs.tag }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -134,3 +144,13 @@ jobs:
           item-path: build/apache-cassandra-*.tar.gz, NEWS.txt, NOTICE.txt, ci
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger repository dispatch event
+        uses: netcracker/qubership-workflow-hub/actions/custom-event@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7 # v2.4.0
+        with:
+          github-token: ${{ secrets.GH_ACCESS_TOKEN }}
+          owner: ${{ github.repository_owner }}
+          repo: qubership-cassandra-operator
+          event-type: cassandra-patched-build
+          client-payload: '{"cassandra-version": "${{ env.CASSANDRA_TAG }}", "cassandra-distro": "${{ env.CASSANDRA_DISTRO }}", "cassandra-distro-url": "https://github.com/${{ github.repository_owner }}/cassandra-patches/releases/download/${{ env.TAG }}/${{ env.CASSANDRA_DISTRO }}", "target-ref": "${{ env.TARGET_REF }}", "replace-symbol": "${{ env.REPLACE_SYMBOL }}", "tag": "${{ env.TAG }}", "repo":"${{ github.repository }}"}'
+        
