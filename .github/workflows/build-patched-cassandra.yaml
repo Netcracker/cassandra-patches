@@ -48,7 +48,9 @@ permissions:
 
 env:
   CASSANDRA_TAG: ${{ inputs.cassandra-tag }}
+  REPLACE_SYMBOL: ${{ inputs.replace-symbol }}
   TAG: ${{ inputs.tag }}
+  TARGET_REF: ${{ inputs.target-ref }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -58,11 +60,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create a New Tag ${{ inputs.tag }}
+      - name: Create a New Tag ${{ env.TAG }}
         uses: netcracker/qubership-workflow-hub/actions/tag-action@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7 # v2.4.0
         with:
           ref: ${{ github.ref_name }}
-          tag-name: ${{ inputs.tag }}
+          tag-name: ${{ env.TAG }}
           force-create: ${{ inputs.forceCreate }}
           switch-to-tag: true
           create-release: true
@@ -75,22 +77,22 @@ jobs:
         run: |
           rm -rf ./*
 
-      - name: "Checkout Cassandra tag ${{ inputs.cassandra-tag }}"
+      - name: "Checkout Cassandra tag ${{ env.CASSANDRA_TAG }}"
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: apache/cassandra
-          ref: ${{ inputs.cassandra-tag }}
+          ref: ${{ env.CASSANDRA_TAG }}
 
-      - name: Checkout cassandra-patches tag ${{ inputs.tag }}
+      - name: Checkout cassandra-patches tag ${{ env.TAG }}
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ env.TAG }}
           path: ./cassandra-patches
 
       - name: Apply patches
         run: |
           cd ${GITHUB_WORKSPACE}
-          for p in ./cassandra-patches/cassandra-patches/${{ inputs.cassandra-tag }}/*.patch; do
+          for p in ./cassandra-patches/cassandra-patches/${{ env.CASSANDRA_TAG }}/*.patch; do
             echo "Applying $p…"
             git apply -p1 --ignore-space-change --ignore-whitespace "$p"
           done
@@ -140,10 +142,22 @@ jobs:
         if: success()
         uses: netcracker/qubership-workflow-hub/actions/assets-action@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7 # v2.4.0
         with:
-          tag: ${{ inputs.tag }}
+          tag: ${{ env.TAG }}
           item-path: build/apache-cassandra-*.tar.gz, NEWS.txt, NOTICE.txt, ci
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        # https://github.com/Netcracker/cassandra-patches/releases/download/cassandra-5.0.8-patched/apache-cassandra-5.0.8-patched-bin.tar.gz
+      - name: Get cassandra distribution artifact
+        run: |
+          CASSANDRA_DISTRO=$(find build/ -regextype posix-extended -regex '.*/apache-cassandra-[0-9.-]+bin\.tarr\.gz' | head -n 1 | xargs -I {} basename {})
+          if [ -f "core/build/distributions/$CASSANDRA_DISTRO" ]; then
+            echo "Found Cassandra distribution: $CASSANDRA_DISTRO"
+            echo "CASSANDRA_DISTRO=$CASSANDRA_DISTRO" >> $GITHUB_ENV
+          else
+            echo "Cassandra distribution not found!"
+            exit 1
+          fi
 
       - name: Trigger repository dispatch event
         uses: netcracker/qubership-workflow-hub/actions/custom-event@8c6dbeb901920bae9f40d7d7b646d8d9127e1ce7 # v2.4.0
