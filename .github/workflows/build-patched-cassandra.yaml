@@ -151,7 +151,7 @@ jobs:
       - name: Set vars for repository dispatch event
         id: vars
         run: |
-          CASSANDRA_DISTRO=$(find build/ -regextype posix-extended -regex '.*/apache-cassandra-[0-9.-]+bin\.tar\.gz' | head -n 1 | xargs -I {} basename {})
+          CASSANDRA_DISTRO=$(find build/ -regextype posix-extended -regex '.*/apache-cassandra-[0-9.-]+-bin\.tar\.gz' | head -n 1 | xargs -I {} basename {})
           if [ -f "build/$CASSANDRA_DISTRO" ]; then
             echo "Found Cassandra distribution: $CASSANDRA_DISTRO"
             echo "CASSANDRA_DISTRO=$CASSANDRA_DISTRO" >> $GITHUB_OUTPUT
