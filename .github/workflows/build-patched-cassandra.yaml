@@ -112,6 +112,7 @@ jobs:
       - name: build
         run: |
           echo "JAVA_HOME=$JAVA_HOME"
+          sed -i '/property name="version"/s/-SNAPSHOT/-patched/g' ./build.xml 
           chmod +x ./.build/build-artifacts.sh
           ./.build/build-artifacts.sh
         env:
